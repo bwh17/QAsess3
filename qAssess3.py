@@ -100,3 +100,89 @@ class QuizGUI:
             Question("Question 9: What is project management?", ["A. The practice of initiating, planning, executing, controlling, and closing the work of a team to achieve specific goals and meet specific success criteria", "B. A software application used to create, manipulate, and analyze numerical data", "C. A type of accounting software", "D. A type of word processing software"], "default"),
             Question("Question 10: What is digital marketing?", ["A. The use of digital channels such as search engines, social media, email, and websites to connect with current and prospective customers", "B. A software application used to create, manipulate, and analyze numerical data", "C. A type of accounting software", "D. A type of word processing software"], "default")
         ]
+    def create_category_selection(self):
+        #Create category selection window
+        self.category_window = tk.Toplevel(self.master)
+        self.category_window.title("Select Category")
+        
+        #Widgets for the category selection
+        tk.Label(self.category_window, text="Select Category:").pack()
+        self.category_var = tk.StringVar(self.category_window)
+        self.category_var.set("Accounting")  # Default category
+        categories = ["Accounting", "Marketing", "Statistics", "Business Applications"]  # Example categories
+        tk.OptionMenu(self.category_window, self.category_var, *categories).pack()
+        
+        tk.Button(self.category_window, text="Start Quiz Now", command=self.start_quiz).pack()
+
+    def start_quiz(self):
+        #Close category selection window
+        self.category_window.destroy()
+        
+        #Quiz window
+        self.quiz_window = tk.Toplevel(self.master)
+        self.quiz_window.title("Quiz")
+
+        #Get selected category
+        selected_category = self.category_var.get()
+
+        #Create canvas with scrollbar
+        canvas = tk.Canvas(self.quiz_window)
+        canvas.pack(side="left", fill="both", expand=True)
+
+        scrollbar = tk.Scrollbar(self.quiz_window, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        #Create frame for questions
+        question_frame = tk.Frame(canvas)
+        canvas.create_window((0, 0), window=question_frame, anchor="nw")
+
+        #Store the correct answers
+        self.correct_answers = [question.answers[0] for question in self.questions[selected_category]]
+
+        #Display the questions for the selected category
+        self.answer_vars = []  # Store answer variables for each question
+        for question in self.questions[selected_category]:
+            question.display()
+            tk.Label(question_frame, text=question.text).pack(anchor="w")
+
+            #Create answer variables for each question
+            answer_var = tk.StringVar(self.quiz_window)
+            self.answer_vars.append(answer_var)
+
+            for answer_choice in question.answers:
+                answer_radio = tk.Radiobutton(question_frame, text=answer_choice, value=answer_choice, variable=answer_var)
+                answer_radio.pack(anchor="w")
+
+        #Scroll region 
+        canvas.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox("all"))
+
+        #Button to submit answer
+        submit_button = tk.Button(self.quiz_window, text="Submit Answer", command=self.check_answer)
+        submit_button.pack()
+
+    def check_answer(self):
+        #Get selected category
+        selected_category = self.category_var.get()
+        
+        #Get user-selected answers
+        user_answers = [answer_var.get() for answer_var in self.answer_vars]
+
+        #Check user answers against correct answers
+        correct_count = sum(1 for user_answer, correct_answer in zip(user_answers, self.correct_answers) if user_answer == correct_answer)
+        
+        #Calculate percentage correct
+        percentage_correct = (correct_count / len(self.correct_answers)) * 100
+
+        #Show user the feedback
+        messagebox.showinfo("Result", f"You got {correct_count} out of {len(self.correct_answers)} correct. Percentage Correct: {percentage_correct:.2f}%")
+
+def main():
+    root = tk.Tk()
+    app = QuizGUI(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
